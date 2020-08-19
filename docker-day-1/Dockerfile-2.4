@@ -1,0 +1,33 @@
+FROM maven:3.6-jdk-8-alpine as builder
+WORKDIR /build
+COPY tomcat-app/src ./src
+COPY tomcat-app/pom.xml ./
+RUN mvn clean package
+     
+FROM openjdk:8-jre
+LABEL maintainer="Maxim Zubov"
+ARG VERSION=8.5.57
+WORKDIR /opt
+RUN wget https://archive.apache.org/dist/tomcat/tomcat-${VERSION%%.*}/v$VERSION/bin/apache-tomcat-$VERSION.zip \
+    && unzip apache-tomcat-$VERSION.zip && rm ./apache-tomcat-$VERSION.zip \
+    && mv ./apache-tomcat-$VERSION ./tomcat && chmod -R +x ./tomcat/bin/*.sh \
+    && { \
+         echo '<?xml version="1.0" encoding="UTF-8"?>'; \
+         echo '<Context antiResourceLocking="false" privileged="true" >'; \
+         echo '  <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="^.*$" />'; \
+         echo '  <Manager sessionAttributeValueClassNameFilter="java\.lang\.\
+         (?:Boolean|Integer|Long|Number|String)|org\.apache\.catalina\.filters\.\
+         CsrfPreventionFilter\$LruCache(?:\$1)?|java\.util\.(?:Linked)?HashMap"/>'; \
+         echo '</Context>'; \
+       } > ./tomcat/webapps/manager/META-INF/context.xml \
+    && { \
+         echo '<?xml version="1.0" encoding="UTF-8"?>'; \
+         echo '<tomcat-users>'; \
+         echo '  <user username="tom" password="cat" roles="manager-gui, manager-script"/>'; \
+         echo '</tomcat-users>'; \
+       } > ./tomcat/conf/tomcat-users.xml         
+#ENV CATALINA_HOME=/opt/tomcat
+#VOLUME /opt/tomcat/webapps
+COPY --from=builder /build/target/*.war ./tomcat/webapps/
+EXPOSE 8080
+CMD ["./tomcat/bin/catalina.sh", "run"]     

@@ -1,0 +1,67 @@
+version: "2.4"
+
+services:
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    networks:
+      stack_net:
+        ipv4_address: 10.11.22.101
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./stack-proxy.conf:/etc/nginx/conf.d/stack-proxy.conf
+    logging:
+      options:
+        tag: stack
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+      - JAVA_OPTS=
+          -Djenkins.install.runSetupWizard=false
+          -Djava.awt.headless=true
+    networks:
+      stack_net:
+        ipv4_address: 10.11.22.102
+    ports:
+      - 8080:8080
+    mem_limit: 500M
+    cpus: '0.35'
+    volumes:
+      - ./jenkins_data:/var/jenkins_home
+    logging:
+      options:
+        tag: stack
+
+  nexus:
+    image: sonatype/nexus3
+    container_name: nexus
+    networks:
+      stack_net:
+        ipv4_address: 10.11.22.103
+    ports:
+      - 8081:8081
+    mem_limit: 1G
+    cpus: '0.25'
+    restart: unless-stopped
+    environment:
+      - NEXUS_CONTEXT=nexus
+    volumes:
+      - ./nexus_data:/nexus-data
+    logging:
+      options:
+        tag: stack
+      
+networks:
+  stack_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.11.22.0/24
+

@@ -1,0 +1,5 @@
+FROM alpine:3.12
+LABEL maintainer="Maxim Zubov"
+RUN apk add --update nginx && rm -rf /var/cache/apk/* && mkdir -pv /run/nginx
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

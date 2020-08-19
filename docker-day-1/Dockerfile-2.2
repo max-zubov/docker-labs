@@ -1,0 +1,10 @@
+FROM ubuntu:20.04
+LABEL maintainer="Maxim Zubov"
+RUN \
+  apt -y update && \
+  apt -y install nginx && \
+  rm -rf /var/lib/apt/lists/* 
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+

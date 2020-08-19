@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+
+  nginx:
+    image: nginx
+    depends_on:
+      - jenkins
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '300M'
+    networks:
+      stack_net:
+    ports:
+      - 80:80
+    volumes:
+      - ./stack-proxy.conf:/etc/nginx/conf.d/stack-proxy.conf
+    logging:
+      options:
+        tag: stack
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.35'
+          memory: 500M
+    environment:
+      - JENKINS_OPTS=--prefix=/jenkins
+      - JAVA_OPTS=
+          -Djenkins.install.runSetupWizard=false
+          -Djava.awt.headless=true
+    networks:
+      stack_net:
+    ports:
+      - 8080:8080
+    logging:
+      options:
+        tag: stack
+      
+networks:
+  stack_net:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 10.11.22.0/24
+

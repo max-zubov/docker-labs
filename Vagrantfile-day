@@ -1,0 +1,26 @@
+Vagrant.configure("2") do |config|
+    
+  config.vm.define "vm2" do |vm2|
+  vm2.vm.box = "bento/centos-8.2"
+  vm2.vm.box_version = "202007.17.0"
+    vm2.vm.network  "private_network", ip: "192.168.33.12"
+    vm2.vm.hostname = "dckr"
+    vm2.vm.provision "shell", inline: <<-SCRIPT
+      dnf -y update
+      dnf -y install jq
+      dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+      dnf -y  install docker-ce --nobest
+#      mkdir -p /etc/docker
+#      echo -e '\n{\n   "log-driver": "journald"\n}' > /etc/docker/daemon.json
+      systemctl enable docker
+      systemctl start docker
+      usermod -aG docker vagrant
+      dnf -y install python3
+      pip3 install docker-compose
+    SCRIPT
+    vm2.vm.provider "virtualbox" do |vb|
+      vb.name = "docker-vm"
+      vb.memory = "3072"
+    end
+  end
+  

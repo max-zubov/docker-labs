@@ -1,0 +1,20 @@
+FROM centos:8
+LABEL maintainer="Maxim Zubov"
+RUN  dnf -y install nginx && \
+     dnf clean all && \
+     ln -s /dev/stdout /var/log/nginx/access.log && \
+     ln -s /dev/stderr /var/log/nginx/error.log
+COPY tomcat-proxy.conf /etc/nginx/conf.d/tomcat-proxy.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+
+
+# Command examples
+#$ docker build -t mzubov/nginx:2.1 . -f ./Dockerfile.2.1
+#$ docker run --name=nginx -d -p 21080:80 mzubov/nginx:2.1
+#$ docker  run --name=nginx -v $(pwd)/tomcat-proxy.conf:/etc/nginx/conf.d/tomcat-proxy.conf \
+#              -p 21080:80 -d mzubov/nginx:2.1
+#$ docker exec -i nginx /bin/bash
+#$ docker logs nginx
+
